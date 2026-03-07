@@ -30,10 +30,10 @@ class CrisisReport(BaseModel):
     source_type: SourceType
     mode: ReportMode
     anonymity: AnonymityLevel
-    timestamp: datetime
+    event_timestamp: datetime
     latitude: float = Field(ge=-90, le=90)
     longitude: float = Field(ge=-180, le=180)
-    narrative: str
+    narrative: str = Field(min_length=1, max_length=50_000)
     language: str = "en"
     crisis_categories: list[str] = Field(default_factory=list)
     help_categories: list[str] = Field(default_factory=list)
