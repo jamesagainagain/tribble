@@ -36,24 +36,28 @@ def prefilter(state: PipelineState) -> dict:
     return {"status": PipelineStatus.PREFILTERED, "node_trace": trace}
 
 
+@_safe_node
 def normalize(state: PipelineState) -> dict:
     trace = state["node_trace"] + ["normalize"]
+    narrative = (state.get("raw_narrative") or "")
     return {
         "status": PipelineStatus.NORMALIZED,
         "node_trace": trace,
         "normalized": {
-            "narrative_clean": state["raw_narrative"].strip(),
-            "word_count": len(state["raw_narrative"].split()),
+            "narrative_clean": narrative.strip(),
+            "word_count": len(narrative.split()),
         },
     }
 
 
+@_safe_node
 def translate(state: PipelineState) -> dict:
     trace = state["node_trace"] + ["translate"]
     t = None if state.get("language") == "en" else state["raw_narrative"]
     return {"status": PipelineStatus.TRANSLATED, "node_trace": trace, "translation": t}
 
 
+@_safe_node
 def classify(state: PipelineState) -> dict:
     trace = state["node_trace"] + ["classify"]
     return {
@@ -67,6 +71,7 @@ def classify(state: PipelineState) -> dict:
     }
 
 
+@_safe_node
 def geocode(state: PipelineState) -> dict:
     trace = state["node_trace"] + ["geocode"]
     return {
@@ -80,16 +85,19 @@ def geocode(state: PipelineState) -> dict:
     }
 
 
+@_safe_node
 def deduplicate(state: PipelineState) -> dict:
     trace = state["node_trace"] + ["deduplicate"]
     return {"status": PipelineStatus.DEDUPLICATED, "node_trace": trace, "duplicates_found": []}
 
 
+@_safe_node
 def corroborate(state: PipelineState) -> dict:
     trace = state["node_trace"] + ["corroborate"]
     return {"status": PipelineStatus.CORROBORATED, "node_trace": trace, "corroboration_hits": []}
 
 
+@_safe_node
 def enrich_weather(state: PipelineState) -> dict:
     return {
         "status": PipelineStatus.WEATHER_ENRICHED,
@@ -97,6 +105,7 @@ def enrich_weather(state: PipelineState) -> dict:
     }
 
 
+@_safe_node
 def enrich_satellite(state: PipelineState) -> dict:
     return {
         "status": PipelineStatus.SATELLITE_ENRICHED,
@@ -104,6 +113,7 @@ def enrich_satellite(state: PipelineState) -> dict:
     }
 
 
+@_safe_node
 def score(state: PipelineState) -> dict:
     trace = state["node_trace"] + ["score"]
     return {
@@ -128,6 +138,7 @@ def score(state: PipelineState) -> dict:
     }
 
 
+@_safe_node
 def cluster_node(state: PipelineState) -> dict:
     return {
         "status": PipelineStatus.PUBLISHED,

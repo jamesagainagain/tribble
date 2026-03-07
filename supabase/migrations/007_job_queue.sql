@@ -1,7 +1,7 @@
 -- Pipeline job queue with SKIP LOCKED claiming
 CREATE TABLE pipeline_jobs (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    report_id UUID NOT NULL REFERENCES reports(id),
+    report_id UUID NOT NULL REFERENCES reports(id) ON DELETE CASCADE,
     status TEXT NOT NULL DEFAULT 'pending'
         CHECK (status IN ('pending', 'processing', 'completed', 'failed')),
     priority INT NOT NULL DEFAULT 0,

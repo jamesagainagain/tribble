@@ -1,5 +1,6 @@
 import logging
 from datetime import datetime, timezone
+from uuid import UUID
 
 import httpx
 from fastapi import APIRouter, HTTPException
@@ -21,7 +22,7 @@ class ReportSubmission(BaseModel):
     crisis_categories: list[str] = Field(default_factory=list, max_length=20)
     help_categories: list[str] = Field(default_factory=list, max_length=20)
     anonymous: bool = True
-    parent_report_id: str | None = None
+    parent_report_id: UUID | None = None
 
 
 class ReportResponse(BaseModel):
@@ -42,45 +43,33 @@ async def submit_report(sub: ReportSubmission):
         anon = AnonymityLevel.ANONYMOUS if sub.anonymous else AnonymityLevel.IDENTIFIED
         src = SourceType.WEB_ANONYMOUS if sub.anonymous else SourceType.WEB_IDENTIFIED
 
-        loc = (
-            db.table("locations")
-            .insert(
+        rpc_result = (
+            db.rpc(
+                "create_report_with_job",
                 {
-                    "country": "Unknown",
-                    "country_iso": "UNK",
-                    "geom": f"POINT({sub.longitude} {sub.latitude})",
-                }
+                    "p_source_type": str(src),
+                    "p_mode": str(mode),
+                    "p_anonymity": str(anon),
+                    "p_event_timestamp": datetime.now(timezone.utc).isoformat(),
+                    "p_latitude": sub.latitude,
+                    "p_longitude": sub.longitude,
+                    "p_narrative": sub.narrative,
+                    "p_language": sub.language,
+                    "p_crisis_categories": sub.crisis_categories,
+                    "p_help_categories": sub.help_categories,
+                    "p_parent_report_id": (
+                        str(sub.parent_report_id) if sub.parent_report_id else None
+                    ),
+                    "p_processing_metadata": {},
+                },
             )
             .execute()
         )
-        if not loc.data:
-            raise HTTPException(500, "Failed to create location record")
+        rows = rpc_result.data or []
+        if not rows or not rows[0].get("report_id"):
+            raise HTTPException(500, "Failed to create queued report")
 
-        rpt = (
-            db.table("reports")
-            .insert(
-                {
-                    "source_type": src,
-                    "mode": mode,
-                    "anonymity": anon,
-                    "event_timestamp": datetime.now(timezone.utc).isoformat(),
-                    "location_id": loc.data[0]["id"],
-                    "narrative": sub.narrative,
-                    "language": sub.language,
-                    "crisis_categories": sub.crisis_categories,
-                    "help_categories": sub.help_categories,
-                    "parent_report_id": sub.parent_report_id,
-                    "processing_metadata": {},
-                }
-            )
-            .execute()
-        )
-        if not rpt.data:
-            raise HTTPException(500, "Failed to create report record")
-
-        rid = rpt.data[0]["id"]
-        db.table("pipeline_jobs").insert({"report_id": rid, "priority": 0}).execute()
-        return ReportResponse(report_id=rid, status="queued")
+        return ReportResponse(report_id=str(rows[0]["report_id"]), status="queued")
     except HTTPException:
         raise
     except httpx.ConnectError as exc:

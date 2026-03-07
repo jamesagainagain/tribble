@@ -30,5 +30,12 @@ def test_protest_mapping():
 
 
 def test_url_construction():
-    url = ACLEDClient("k", "e")._build_url("Sudan", 2023, 100)
-    assert "country=Sudan" in url and "year=2023" in url
+    params = ACLEDClient("k", "e")._build_params("Sudan", 2023, 100)
+    assert params == {
+        "key": "k",
+        "email": "e",
+        "country": "Sudan",
+        "year": "2023",
+        "limit": "100",
+        "page": "1",
+    }

@@ -51,18 +51,18 @@ Identified during code review of Batches 3–4 (Tasks 7–12).
 **Issue:** The HTTP response was parsed after the `async with httpx.AsyncClient` block exited, risking use of a closed connection's buffer.
 **Fix:** Moved `r.json()` inside the `async with` block.
 
-### 7. [ ] Pipeline nodes have no error boundaries (graph.py)
+### 7. [x] Pipeline nodes have no error boundaries (graph.py)
 
 **File:** `backend/src/tribble/pipeline/graph.py`
 **Issue:** If any node throws, the entire pipeline crashes with no trace of which node failed. Only `prefilter` currently has the `@_safe_node` decorator.
-**Fix required:** Add `@_safe_node` decorator to all remaining 10 nodes: `normalize`, `translate`, `classify`, `geocode`, `deduplicate`, `corroborate`, `enrich_weather`, `enrich_satellite`, `score`, `cluster_node`.
+**Fix:** Added `@_safe_node` decorator to all remaining 10 nodes: `normalize`, `translate`, `classify`, `geocode`, `deduplicate`, `corroborate`, `enrich_weather`, `enrich_satellite`, `score`, `cluster_node`.
 
-### 8. [ ] `normalize` unsafe access on `raw_narrative` (graph.py)
+### 8. [x] `normalize` unsafe access on `raw_narrative` (graph.py)
 
 **File:** `backend/src/tribble/pipeline/graph.py`
 **Lines:** 40, 45–46
 **Issue:** `state["raw_narrative"].strip()` and `.split()` will throw `AttributeError` if `raw_narrative` is `None`, or `KeyError` if missing entirely. The `@_safe_node` decorator will catch this, but it should be handled explicitly.
-**Fix required:** Use `(state.get("raw_narrative") or "")` like `prefilter` already does.
+**Fix:** Switched to `narrative = (state.get("raw_narrative") or "")`, then derived both `narrative_clean` and `word_count` from that safe value.
 
 ### 9. [x] No input validation on language / list fields (reports.py)
 
@@ -92,18 +92,18 @@ Identified during code review of Batches 3–4 (Tasks 7–12).
 
 ## MEDIUM
 
-### 13. [ ] Missing `ON DELETE CASCADE` on pipeline_jobs FK (007_job_queue.sql)
+### 13. [x] Missing `ON DELETE CASCADE` on pipeline_jobs FK (007_job_queue.sql)
 
 **File:** `supabase/migrations/007_job_queue.sql`
 **Issue:** `report_id` references `reports(id)` without `ON DELETE CASCADE`. Deleting a report leaves orphaned jobs that can never be claimed or cleaned up.
-**Fix required:** Add `ON DELETE CASCADE` to the foreign key constraint.
+**Fix:** Updated `report_id UUID NOT NULL REFERENCES reports(id) ON DELETE CASCADE`.
 
 ---
 
 ## TEST FIXES
 
-### 14. [ ] `test_url_construction` references renamed method (test_acled.py)
+### 14. [x] `test_url_construction` references renamed method (test_acled.py)
 
 **File:** `backend/tests/test_acled.py`
 **Issue:** Test calls `_build_url()` which was renamed to `_build_params()`. The assertion also checks for a URL string, but the method now returns a `dict`.
-**Fix required:** Update test to call `_build_params()` and assert against the expected dict structure.
+**Fix:** Updated test to call `_build_params()` and assert the returned params dict (`key`, `email`, `country`, `year`, `limit`, `page`).
