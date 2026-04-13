@@ -3,7 +3,7 @@
 
 **Humanitarian intelligence platform.** Multi-source crisis data flows through a deterministic LangGraph pipeline, is scored across nine confidence signals, clustered spatiotemporally, and served as GeoJSON to maps and dashboards.
 
-**Won Claude AI Hackathon - Cambridge, Honourable Mention in UK AI Agent x OpenClaw Hackathon
+**Won Claude AI Hackathon - Cambridge, Honourable Mention in UK AI Agent x OpenClaw Hackathon**
 
 ---
 
