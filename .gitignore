@@ -36,3 +36,4 @@ htmlcov/
 
 # Local worktrees
 .worktrees/
+.cursor/mcp.json
